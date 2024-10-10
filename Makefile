@@ -68,11 +68,11 @@ all-local: run-verifier-local run-bench-local
 
 run-verifier-local: build-verifier-local
 	mpiexec -n ${NUMRANKS} ./run_test_op_var01.x  ${MIN} ${MAX} ${STEP} 1 -${KMEDIUM} ./data/result_verification_local_op_var01_k${KMEDIUM}.csv
-	cat result_verification_local_op_var01_k${KMEDIUM}.csv
+	cat ./data/result_verification_local_op_var01_k${KMEDIUM}.csv
 	mpiexec -n ${NUMRANKS} ./run_test_op_var02.x  ${MIN} ${MAX} ${STEP} 1 -${KMEDIUM} ./data/result_verification_local_op_var02_k${KMEDIUM}.csv
-	cat result_verification_local_op_var02_k${KMEDIUM}.csv
+	cat ./data/result_verification_local_op_var02_k${KMEDIUM}.csv
 	mpiexec -n ${NUMRANKS} ./run_test_op_var03.x  ${MIN} ${MAX} ${STEP} 1 -${KMEDIUM} ./data/result_verification_local_op_var03_k${KMEDIUM}.csv
-	cat result_verification_local_op_var03_k${KMEDIUM}.csv
+	cat ./data/result_verification_local_op_var03_k${KMEDIUM}.csv
 	echo "Number of FAILS: `grep "FAIL" result_verification_local_op_*.csv|wc -l`"
 
 

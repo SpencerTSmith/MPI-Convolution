@@ -8,7 +8,7 @@
 
 ######################################
 # DO NOT CHANGE THIS FOLLOWING LINE: #
-OP_BASELINE_FILE="baseline_op.c"    #
+OP_BASELINE_FILE="./src/baseline_op.c"    #
 ######################################
 
 ############################################
