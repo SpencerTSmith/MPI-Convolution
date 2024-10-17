@@ -84,13 +84,37 @@ void COMPUTE_NAME( int m0, int k0,
     {
       /* This block will only run on the node that matches root_rid .*/
 
-      for( int i0 = 0; i0 < m0; ++i0 )
+  for( int i0 = 0; i0 < m0; ++i0 )
 	{
 	  float res = 0.0f;
+
+    //Dispatch if we need to start from beginning(eliminating modulo)
+    if(i0+k0 > m0){
+
+      //Checks the number of weight that still will be regular towards the end of the array
+      int regular = m0-i0;
+      //Checks the number of weights that will have toe be multiplied by elements at the start of the array
+      int from_start = k0-regular;
+      //Multiplies by the elements at end of input
+      for(int h = 0; h < regular; h++){
+        res+= input_distributed[(h+i0)] * weights_distributed[h];
+      }
+      //Multiplies by the elements at beginning of input
+      for(int k = 0; k < from_start; k++){
+        res+= input_distributed[k] * weights_distributed[k+regular];
+      }
+      //Assigns to the correct place in output
+  	  output_distributed[i0] = res;
+
+    }
+
+  //Regular convolution
+    else{
 	  for( int p0 = 0; p0 < k0; ++p0 )
 	    {
-	      res += input_distributed[(p0+i0) % m0] * weights_distributed[p0];
+	      res += input_distributed[(p0+i0)] * weights_distributed[p0];
 	    }
+    }
 	  output_distributed[i0] = res;
 	}
     }
@@ -241,5 +265,3 @@ void DISTRIBUTED_FREE_NAME( int m0, int k0,
       /* This will run on all other nodes whose rid is not root_rid. */  
     }
 }
-
-
