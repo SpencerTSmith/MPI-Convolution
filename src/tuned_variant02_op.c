@@ -83,13 +83,13 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed,
         __m256 weights = _mm256_loadu_ps(padded_weights);
 
         for (int i0 = 0; i0 <= m0 - k0; ++i0) {
-            __m256 sums = _mm256_setzero_ps();
             __m256 input = _mm256_loadu_ps(&input_distributed[i0]);
             __m256 mults = _mm256_mul_ps(weights, input);
             float to_sum[8] = {0};
-            _mm256_loadu_ps(to_sum);
+            _mm256_storeu_ps(to_sum, mults);
             float sum = 0.0f;
-            for (int j = 0; j < k0; j++) {
+            for (int j = 0; j < 8; j++) {
+                // printf("%f\n", to_sum[j]);
                 sum += to_sum[j];
             }
             output_distributed[i0] = sum;
@@ -106,6 +106,7 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed,
                 res +=
                     input_distributed[j] * weights_distributed[j + unwrapped_n];
             }
+            output_distributed[i0] = res;
         }
     } else {
         /* This will run on all other nodes whose rid is not root_rid. */
