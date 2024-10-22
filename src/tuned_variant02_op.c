@@ -82,7 +82,8 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed,
         memcpy(padded_weights, weights_distributed, sizeof(float) * k0);
         __m256 weights = _mm256_loadu_ps(padded_weights);
 
-        for (int i0 = 0; i0 <= m0 - k0; ++i0) {
+        int before_wrap = m0 - k0;
+        for (int i0 = 0; i0 <= before_wrap; ++i0) {
             __m256 input = _mm256_loadu_ps(&input_distributed[i0]);
             __m256 mults = _mm256_mul_ps(weights, input);
             float to_sum[8] = {0};
@@ -95,7 +96,7 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed,
             output_distributed[i0] = sum;
         }
         // do the part that wraps around
-        for (int i0 = m0 - k0 + 1; i0 < m0; i0++) {
+        for (int i0 = before_wrap + 1; i0 < m0; i0++) {
             float res = 0.0f;
             int unwrapped_n = m0 - i0;
             int wrapped_n = k0 - unwrapped_n;
