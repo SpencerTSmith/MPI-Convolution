@@ -35,6 +35,7 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include <immintrin.h>
 
@@ -77,14 +78,34 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed,
     if (rid == root_rid) {
         /* This block will only run on the node that matches root_rid .*/
 
-        for (int i0 = 0; i0 < m0; ++i0) {
-            float res = 0.0f;
-            for (int p0 = 0; p0 < k0; ++p0) {
-                int index = p0 + i0;
-                index = index >= m0 ? index - m0 : index;
-                res += input_distributed[index] * weights_distributed[p0];
+        float padded_weights[8] = {0};
+        memcpy(padded_weights, weights_distributed, sizeof(float) * k0);
+        __m256 weights = _mm256_loadu_ps(padded_weights);
+
+        for (int i0 = 0; i0 <= m0 - k0; ++i0) {
+            __m256 sums = _mm256_setzero_ps();
+            __m256 input = _mm256_loadu_ps(&input_distributed[i0]);
+            __m256 mults = _mm256_mul_ps(weights, input);
+            float to_sum[8] = {0};
+            _mm256_loadu_ps(to_sum);
+            float sum = 0.0f;
+            for (int j = 0; j < k0; j++) {
+                sum += to_sum[j];
             }
-            output_distributed[i0] = res;
+            output_distributed[i0] = sum;
+        }
+        // do the part that wraps around
+        for (int i0 = m0 - k0 + 1; i0 < m0; i0++) {
+            float res = 0.0f;
+            int unwrapped_n = m0 - i0;
+            int wrapped_n = k0 - unwrapped_n;
+            for (int j = 0; j < unwrapped_n; j++) {
+                res += input_distributed[j + i0] * weights_distributed[j];
+            }
+            for (int j = 0; j < wrapped_n; j++) {
+                res +=
+                    input_distributed[j] * weights_distributed[j + unwrapped_n];
+            }
         }
     } else {
         /* This will run on all other nodes whose rid is not root_rid. */
