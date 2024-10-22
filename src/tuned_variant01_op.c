@@ -84,7 +84,7 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed,
             output_distributed[i0] = res;
         }
         // do the part that wraps around
-        for (int i0 = m0 - k0 + 1; i0 < m0; i0++) {
+        for (int i0 = before_wrap + 1; i0 < m0; i0++) {
             float res = 0.0f;
             int unwrapped_n = m0 - i0;
             int wrapped_n = k0 - unwrapped_n;
@@ -95,6 +95,7 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed,
                 res +=
                     input_distributed[j] * weights_distributed[j + unwrapped_n];
             }
+            output_distributed[i0] = res;
         }
     } else {
         /* This will run on all other nodes whose rid is not root_rid. */
