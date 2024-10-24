@@ -33,7 +33,7 @@ COLLECT_DATA_NAME_TST="test_collect"
 TEST_RIG="./src/verify_op.c"
 
 # Build the verifier code
-${CC} -std=c99 -c \
+${CC} -g -std=c99 -c \
     -DCOMPUTE_NAME_REF=${COMPUTE_NAME_REF} \
     -DDISTRIBUTED_ALLOCATE_NAME_REF=${DISTRIBUTED_ALLOCATE_NAME_REF} \
     -DDISTRIBUTED_FREE_NAME_REF=${DISTRIBUTED_FREE_NAME_REF} \
