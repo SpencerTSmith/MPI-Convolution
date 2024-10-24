@@ -83,15 +83,17 @@ void COMPUTE_NAME( int m0, int k0,
   if(rid == root_rid )
     {
       /* This block will only run on the node that matches root_rid .*/
-
-      for( int i0 = 0; i0 < m0; ++i0 )
+  //Initialize output_distributed to be 0's so computation can proceed efficiently
+  for(int i = 0; i < m0; i++){
+    output_distributed[i] = 0;
+  }
+  
+  for( int p0 = 0; p0 < k0; ++p0 )
 	{
-	  float res = 0.0f;
-	  for( int p0 = 0; p0 < k0; ++p0 )
+	  for( int i0 = 0; i0 < m0; ++i0 )
 	    {
-	      res += input_distributed[(p0+i0) % m0] * weights_distributed[p0];
+	      output_distributed[i0] += input_distributed[(p0+i0) % m0] * weights_distributed[p0];
 	    }
-	  output_distributed[i0] = res;
 	}
     }
   else
@@ -161,7 +163,6 @@ void DISTRIBUTE_DATA_NAME( int m0, int k0,
       // Distribute the inputs
       for( int i0 = 0; i0 < m0; ++i0 )
 	input_distributed[i0] = input_sequential[i0];
-  
       // Distribute the weights
       for( int p0 = 0; p0 < k0; ++p0 )
 	weights_distributed[p0] = weights_sequential[p0];
