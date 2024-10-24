@@ -24,5 +24,5 @@ OP_SUBMISSION_VAR03_FILE="./src/tuned_variant03_op.c"
 ######################################################
 CC=mpicc
 # CFLAGS="-std=c99 -O2"
-CFLAGS="-std=c99 -O2 -mavx2 -mfma"
+CFLAGS="-g -std=c99 -O2 -mavx2 -mfma"
 
