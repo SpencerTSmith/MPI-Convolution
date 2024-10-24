@@ -23,7 +23,7 @@
 
 # Increments to use in the local tests
 MIN=16
-MAX=512
+MAX=1024
 STEP=16
 
 # These are sufficiently small
