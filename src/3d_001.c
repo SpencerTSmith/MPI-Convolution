@@ -1,5 +1,5 @@
 /*
-  This is the 1D tiling implementation of a 1D Stencil operation.
+  This is the 3D tiling implementation of a 1D Stencil operation.
 
   Parameters:
 
@@ -59,7 +59,9 @@
 #endif
 
 
-#define TILE_SIZE 16 //CHANGEME -- This is the tile size for 1D tiling
+#define TILE_SIZE_WEIGHTS 16 //CHANGEME -- This is the tile size for 1D tiling
+#define TILE_SIZE_INNER 8 //CHANGEME -- This is the tile size for 1D tiling
+#define TILE_SIZE_OUTER 8 //CHANGEME -- This is the tile size for 1D tiling
 
 
 void COMPUTE_NAME( int m0, int k0,
@@ -76,34 +78,57 @@ void COMPUTE_NAME( int m0, int k0,
   int tag = 0;
   MPI_Status  status;
   int root_rid = 0;
+  int d0 = m0;
 
   MPI_Comm_rank(MPI_COMM_WORLD, &rid);
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  if(rid == root_rid )
+  if (rid == root_rid)
     {
-      // For 1 D tiling, we will be splitting the outerloop (which is for the dataset) based on TILE_SIZE
-      for(int i = 0; i < m0; i +=TILE_SIZE)
-      {
-        int i_max = i +TILE_SIZE;
-
-        if(i_max > m0)
+        // Outer loop for dataset tiles (loop 1)
+        for (int outer_tile = 0; outer_tile < m0; outer_tile += TILE_SIZE_OUTER)
         {
-            i_max = m0;
-        }
-
-        // Go over each tile to process elements within each tile
-        for(int i0 = i; i0<i_max; ++i0)
-        {
-            float res =0.0f;
-            for(int j = 0; j <k0; ++j) 
+            int outer_tile_end = outer_tile + TILE_SIZE_OUTER;
+            if (outer_tile_end > m0)
             {
-                res += input_distributed[(j + i0) % m0] * weights_distributed[j];
-  
+               outer_tile_end = m0;
             }
-            output_distributed[i0] = res;
+
+            // Middle loop for weights tiles (loop 2)
+            for (int p_tile = 0; p_tile < k0; p_tile += TILE_SIZE_WEIGHTS)
+            {
+                int p_tile_end = p_tile + TILE_SIZE_WEIGHTS;
+                if (p_tile_end > k0)
+                {
+                  p_tile_end = k0;
+                }
+
+                // Inner loop for subtiles of dataset (loop 3)
+                for (int inner_tile = 0; inner_tile < outer_tile_end; inner_tile += TILE_SIZE_INNER)
+                {
+                    int inner_tile_end = inner_tile + TILE_SIZE_INNER;
+                    if (inner_tile_end > outer_tile_end)
+                    {
+                        inner_tile_end = outer_tile_end;
+                    }
+
+                    // Process each tile for dataset traversal
+                    for (int i0 = inner_tile; i0 < inner_tile_end; ++i0)
+                    {
+                        float res = 0.0f;
+
+                        // Process each tile for weights traversal
+                        for (int p0 = p_tile; p0 < p_tile_end; ++p0)
+                        {
+                          res += input_distributed[(p0 + i0) % m0] * weights_distributed[p0];
+
+                        }
+
+                        output_distributed[i0] = res;
+                    }
+                }
+            }
         }
-      }
     }
   else
     {

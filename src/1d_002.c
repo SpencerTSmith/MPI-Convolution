@@ -1,5 +1,6 @@
 /*
   This is the 1D tiling implementation of a 1D Stencil operation.
+  THIS IS A REFINEMENT: here, instead of looping through the dataset, we loop through the weights.
 
   Parameters:
 
@@ -59,7 +60,7 @@
 #endif
 
 
-#define TILE_SIZE 16 //CHANGEME -- This is the tile size for 1D tiling
+#define TILE_SIZE 8 //CHANGEME -- This is the tile size for 1D tiling
 
 
 void COMPUTE_NAME( int m0, int k0,
@@ -82,28 +83,49 @@ void COMPUTE_NAME( int m0, int k0,
 
   if(rid == root_rid )
     {
-      // For 1 D tiling, we will be splitting the outerloop (which is for the dataset) based on TILE_SIZE
-      for(int i = 0; i < m0; i +=TILE_SIZE)
-      {
-        int i_max = i +TILE_SIZE;
+      // // For 1 D tiling, we will be splitting the outerloop (which is for the weights) based on TILE_SIZE
+      // for(int i = 0; i < k0; i +=TILE_SIZE)
+      // {
+      //   int i_max = i + TILE_SIZE;
 
-        if(i_max > m0)
-        {
-            i_max = m0;
-        }
+      //   if(i_max > k0)
+      //   {
+      //       i_max = k0;
+      //   }
 
-        // Go over each tile to process elements within each tile
-        for(int i0 = i; i0<i_max; ++i0)
+      //   float res =0.0f;
+
+      //   // Go over each tile to process elements within each tile
+      //   for(int i0 = i; i0<i_max; ++i0)
+      //   {
+      //       for(int j = 0; j <m0; ++j) 
+      //       {
+      //         res += input_distributed[(j + i) % m0] * weights_distributed[j];
+      //       }
+      //   }
+      //   output_distributed[i] += res;
+
+      // Process each element of the dataset
+        for (int i0 = 0; i0 < m0; ++i0)
         {
-            float res =0.0f;
-            for(int j = 0; j <k0; ++j) 
+            float res = 0.0f;
+
+            // Outer loop for tiles of the weights (p0 loop)
+            for (int p_tile = 0; p_tile < k0; p_tile += TILE_SIZE)
             {
-                res += input_distributed[(j + i0) % m0] * weights_distributed[j];
-  
+                int p_tile_end = p_tile + TILE_SIZE;
+                if (p_tile_end > k0) p_tile_end = k0;
+
+                // Process each tile for weights traversal
+                for (int p0 = p_tile; p0 < p_tile_end; ++p0)
+                {
+                    res += input_distributed[(p0 + i0) % m0] * weights_distributed[p0];
+                }
             }
+
             output_distributed[i0] = res;
         }
-      }
+
     }
   else
     {

@@ -15,9 +15,9 @@ OP_BASELINE_FILE="./src/baseline_op.c"    #
 # HOWEVER, CHANGE THESE LINES:             #
 # Replace the filenames with your variants #
 ############################################
-OP_SUBMISSION_VAR01_FILE="./src/tuned_variant01_op.c"
-OP_SUBMISSION_VAR02_FILE="./src/1d_001.c"
-OP_SUBMISSION_VAR03_FILE="./src/2d_001.c"
+OP_SUBMISSION_VAR01_FILE="./src/1d_001.c"
+OP_SUBMISSION_VAR02_FILE="./src/1d_002.c"
+OP_SUBMISSION_VAR03_FILE="./src/3d_001.c"
 
 ######################################################
 # You can even change the compiler flags if you want #

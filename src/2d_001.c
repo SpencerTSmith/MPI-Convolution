@@ -1,5 +1,5 @@
 /*
-  This is the baseline implementation of a 1D Stencil operation.
+  This is the 2D tiling implementation of a 1D Stencil operation.
 
   Parameters:
 
