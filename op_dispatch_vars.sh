@@ -17,12 +17,12 @@ OP_BASELINE_FILE="./src/baseline_op.c"    #
 ############################################
 OP_SUBMISSION_VAR01_FILE="./src/tuned_variant01_op.c"
 OP_SUBMISSION_VAR02_FILE="./src/tuned_variant03_op.c"
-OP_SUBMISSION_VAR03_FILE="./src/simd_omp.c"
+OP_SUBMISSION_VAR03_FILE="./src/simd_tiling_omp.c"
 
 ######################################################
 # You can even change the compiler flags if you want #
 ######################################################
 CC=mpicc
 # CFLAGS="-std=c99 -O2"
-CFLAGS="-g -std=c99 -O2 -mavx2 -mfma -fopenmp"
+CFLAGS="-std=c99 -O2 -mavx2 -mfma -fopenmp"
 
