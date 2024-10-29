@@ -33,8 +33,9 @@
 */
 
 #include <mpi.h>
-#include <stdio.h>
 #include <stdlib.h>
+
+#include <immintrin.h>
 
 #ifndef COMPUTE_NAME
 #define COMPUTE_NAME baseline
@@ -56,15 +57,16 @@
 #define DISTRIBUTED_FREE_NAME baseline_free
 #endif
 
-#define TILE_SIZE_OUTER 16 // CHANGEME -- This is the tile size for 1D tiling
-#define TILE_SIZE_INNER 8  // CHANGEME -- This is the tile size for 1D tiling
+#define AVX2_FLOAT_N 8
+#define TILE_3D_N 256
+#define TILE_2D_N 128
 
 void COMPUTE_NAME(int m0, int k0, float *input_distributed,
                   float *weights_distributed, float *output_distributed)
 
 {
   /*
-    This version is for 1D Tiling
+    STUDENT_TODO: Modify as you please.
   */
   int rid;
   int num_ranks;
@@ -76,29 +78,47 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed,
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
   if (rid == root_rid) {
-#pragma omp parallel for
-    for (int i = 0; i < m0; i += TILE_SIZE_OUTER) {
-      int outer_max = i + TILE_SIZE_OUTER;
+    /* This block will only run on the node that matches root_rid .*/
 
-      if (outer_max > m0) {
-        outer_max = m0;
-      }
+    __m256i rotate_indices = _mm256_setr_epi32(1, 2, 3, 4, 5, 6, 7, 0);
+    int before_wrap = m0 - k0;
 
-      for (int inner = 0; inner < k0; inner += TILE_SIZE_INNER) {
-        int inner_max = inner + TILE_SIZE_INNER;
+    for (int t3 = 0; t3 < before_wrap; t3 += TILE_3D_N) {
+      int tile3_bound = t3 + TILE_3D_N;
+      for (int i0 = t3; i0 <= tile3_bound; i0 += AVX2_FLOAT_N) {
+        __m256 input_reg_1 = _mm256_loadu_ps(&input_distributed[i0]);
+        __m256 input_reg_2 =
+            _mm256_loadu_ps(&input_distributed[i0 + AVX2_FLOAT_N]);
+        __m256 res_reg = _mm256_setzero_ps();
+        for (int j = 0; j < k0; j++) {
+          __m256 current_weight_reg =
+              _mm256_broadcast_ss(&weights_distributed[j]);
+          res_reg = _mm256_fmadd_ps(input_reg_1, current_weight_reg, res_reg);
 
-        if (inner_max > k0) {
-          inner_max = k0;
+          // Rotate input registers individually
+          input_reg_1 = _mm256_permutevar8x32_ps(input_reg_1, rotate_indices);
+          input_reg_2 = _mm256_permutevar8x32_ps(input_reg_2, rotate_indices);
+          __m256 temp = input_reg_1;
+          // Swap end pieces between registers to complete rotation
+          input_reg_1 = _mm256_blend_ps(input_reg_1, input_reg_2, 0b10000000);
+          input_reg_2 = _mm256_blend_ps(input_reg_2, temp, 0b10000000);
         }
-        // Go over each tile to process elements within each tile of the dataset
-        for (int i0 = i; i0 < outer_max; ++i0) {
-          float res = 0.0f;
-          for (int j = 0; j < inner_max; ++j) {
-            res += input_distributed[(j + i0) % m0] * weights_distributed[j];
-          }
-          output_distributed[i0] = res;
-        }
+        _mm256_storeu_ps(&output_distributed[i0], res_reg);
       }
+    }
+
+    // do the part that wraps around
+    for (int i0 = before_wrap; i0 < m0; i0++) {
+      float res = 0.0f;
+      int unwrapped_n = m0 - i0;
+      int wrapped_n = k0 - unwrapped_n;
+      for (int j = 0; j < unwrapped_n; j++) {
+        res += input_distributed[j + i0] * weights_distributed[j];
+      }
+      for (int j = 0; j < wrapped_n; j++) {
+        res += input_distributed[j] * weights_distributed[j + unwrapped_n];
+      }
+      output_distributed[i0] = res;
     }
   } else {
     /* This will run on all other nodes whose rid is not root_rid. */

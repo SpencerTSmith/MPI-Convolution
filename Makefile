@@ -46,7 +46,7 @@ SHELL:=/bin/bash
 
 
 clean:
-	rm -rf *.x *~ *.o
+	rm -rf *.x *~ ./src/*.o
 
 cleanall: clean
 	rm -f *.csv *.png
@@ -64,7 +64,7 @@ build-bench-schooner:
 	module load ${MPIVER_SCHOONER}; \
 	./build_bench_op.sh
 
-all-local: run-verifier-local run-bench-local
+all-local: clean run-verifier-local run-bench-local
 
 run-verifier-local: build-verifier-local
 	mpiexec -n ${NUMRANKS} ./run_test_op_var01.x  ${MIN} ${MAX} ${STEP} 1 -${KMEDIUM} ./data/result_verification_local_op_var01_k${KMEDIUM}.csv
