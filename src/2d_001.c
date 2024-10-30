@@ -1,5 +1,5 @@
 /*
-  This is the baseline implementation of a 1D Stencil operation.
+  This is the 2D tiling implementation of a 1D Stencil operation.
 
   Parameters:
 
@@ -64,7 +64,9 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed,
 
 {
   /*
-    This version is for 1D Tiling
+    This version is for 2D Tiling
+    We will be having one level of tiling on the outer loop and one level of tiling on the inner loop.
+    Therefore tiling on the dataset traversal as well as the weights traversal.
   */
   int rid;
   int num_ranks;
