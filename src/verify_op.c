@@ -254,13 +254,12 @@ int main(int argc, char *argv[]) {
             if (res > ERROR_THRESHOLD) {
                 fprintf(result_file, "FAIL\n");
 
-                // for (int i = 0; i < m0; i++) {
-                //   if (output_sequential_tst[i] != output_sequential_ref[i])
-                //     fprintf(result_file,
-                //             "index = %d ref = %.9f test = %.9f diff = %.9f\n", i,
-                //             output_sequential_ref[i], output_sequential_tst[i],
-                //             (output_sequential_ref[i] - output_sequential_tst[i]));
-                // }
+                /*for (int i = 0; i < m0; i++) {*/
+                /*    if (output_sequential_tst[i] != output_sequential_ref[i])*/
+                /*        fprintf(result_file, "index = %d ref = %.9f test = %.9f diff = %.9f\n", i,*/
+                /*                output_sequential_ref[i], output_sequential_tst[i],*/
+                /*                (output_sequential_ref[i] - output_sequential_tst[i]));*/
+                /*}*/
             } else
                 fprintf(result_file, "PASS\n");
         } else { /* all other nodes */

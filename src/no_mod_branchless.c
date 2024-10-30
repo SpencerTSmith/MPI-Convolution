@@ -33,9 +33,8 @@
 */
 
 #include <mpi.h>
+#include <stdio.h>
 #include <stdlib.h>
-
-#include <immintrin.h>
 
 #ifndef COMPUTE_NAME
 #define COMPUTE_NAME baseline
@@ -57,11 +56,8 @@
 #define DISTRIBUTED_FREE_NAME baseline_free
 #endif
 
-#define AVX2_FLOAT_N 8
-#define TILE_3D_N 256
-
-void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distributed,
-                  float *output_distributed)
+void COMPUTE_NAME(int m0, int k0, float *input_distributed,
+                  float *weights_distributed, float *output_distributed)
 
 {
     /*
@@ -79,35 +75,16 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
     if (rid == root_rid) {
         /* This block will only run on the node that matches root_rid .*/
 
-        __m256i rotate_indices = _mm256_setr_epi32(1, 2, 3, 4, 5, 6, 7, 0);
         int before_wrap = m0 - k0;
-
-#pragma omp parallel for num_threads(2)
-        for (int t0 = 0; t0 < before_wrap; t0 += TILE_3D_N) {
-            int t0_bound = t0 + TILE_3D_N;
-            t0_bound = t0_bound > before_wrap ? before_wrap : t0_bound;
-            for (int i0 = t0; i0 < t0_bound; i0 += AVX2_FLOAT_N) {
-                __m256 input_reg_1 = _mm256_loadu_ps(&input_distributed[i0]);
-                __m256 input_reg_2 = _mm256_loadu_ps(&input_distributed[i0 + AVX2_FLOAT_N]);
-                __m256 res_reg = _mm256_setzero_ps();
-                for (int j = 0; j < k0; j++) {
-                    __m256 current_weight_reg = _mm256_broadcast_ss(&weights_distributed[j]);
-                    res_reg = _mm256_fmadd_ps(input_reg_1, current_weight_reg, res_reg);
-
-                    // Rotate input registers individually
-                    input_reg_1 = _mm256_permutevar8x32_ps(input_reg_1, rotate_indices);
-                    input_reg_2 = _mm256_permutevar8x32_ps(input_reg_2, rotate_indices);
-                    __m256 temp = input_reg_1;
-                    // Swap end pieces between registers to complete rotation
-                    input_reg_1 = _mm256_blend_ps(input_reg_1, input_reg_2, 0b10000000);
-                    input_reg_2 = _mm256_blend_ps(input_reg_2, temp, 0b10000000);
-                }
-                _mm256_storeu_ps(&output_distributed[i0], res_reg);
+        for (int i0 = 0; i0 <= before_wrap; ++i0) {
+            float res = 0.0f;
+            for (int p0 = 0; p0 < k0; ++p0) {
+                res += input_distributed[p0 + i0] * weights_distributed[p0];
             }
+            output_distributed[i0] = res;
         }
-
         // do the part that wraps around
-        for (int i0 = before_wrap; i0 < m0; i0++) {
+        for (int i0 = before_wrap + 1; i0 < m0; i0++) {
             float res = 0.0f;
             int unwrapped_n = m0 - i0;
             int wrapped_n = k0 - unwrapped_n;
@@ -115,7 +92,8 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
                 res += input_distributed[j + i0] * weights_distributed[j];
             }
             for (int j = 0; j < wrapped_n; j++) {
-                res += input_distributed[j] * weights_distributed[j + unwrapped_n];
+                res +=
+                    input_distributed[j] * weights_distributed[j + unwrapped_n];
             }
             output_distributed[i0] = res;
         }
@@ -126,7 +104,8 @@ void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distr
 
 // Create the buffers on each node
 void DISTRIBUTED_ALLOCATE_NAME(int m0, int k0, float **input_distributed,
-                               float **weights_distributed, float **output_distributed) {
+                               float **weights_distributed,
+                               float **output_distributed) {
     /*
       STUDENT_TODO: Modify as you please.
     */
@@ -151,8 +130,9 @@ void DISTRIBUTED_ALLOCATE_NAME(int m0, int k0, float **input_distributed,
     }
 }
 
-void DISTRIBUTE_DATA_NAME(int m0, int k0, float *input_sequential, float *weights_sequential,
-                          float *input_distributed, float *weights_distributed) {
+void DISTRIBUTE_DATA_NAME(int m0, int k0, float *input_sequential,
+                          float *weights_sequential, float *input_distributed,
+                          float *weights_distributed) {
     /*
       STUDENT_TODO: Modify as you please.
     */
@@ -181,7 +161,8 @@ void DISTRIBUTE_DATA_NAME(int m0, int k0, float *input_sequential, float *weight
     }
 }
 
-void COLLECT_DATA_NAME(int m0, int k0, float *output_distributed, float *output_sequential) {
+void COLLECT_DATA_NAME(int m0, int k0, float *output_distributed,
+                       float *output_sequential) {
     /*
       STUDENT_TODO: Modify as you please.
     */
@@ -206,7 +187,8 @@ void COLLECT_DATA_NAME(int m0, int k0, float *output_distributed, float *output_
     }
 }
 
-void DISTRIBUTED_FREE_NAME(int m0, int k0, float *input_distributed, float *weights_distributed,
+void DISTRIBUTED_FREE_NAME(int m0, int k0, float *input_distributed,
+                           float *weights_distributed,
                            float *output_distributed) {
     /*
       STUDENT_TODO: Modify as you please.
