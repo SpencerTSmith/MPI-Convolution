@@ -59,9 +59,9 @@
 #endif
 
 
-#define TILE_SIZE_WEIGHTS 16 //CHANGEME -- This is the tile size for 1D tiling
-#define TILE_SIZE_INNER 8 //CHANGEME -- This is the tile size for 1D tiling
-#define TILE_SIZE_OUTER 8 //CHANGEME -- This is the tile size for 1D tiling
+#define TILE_SIZE_WEIGHTS 8 //CHANGEME -- This is the tile size for weights.
+#define TILE_SIZE_INNER 8 //CHANGEME -- This is the tile size for Inner Tiles for the dataset
+#define TILE_SIZE_OUTER  //CHANGEME -- This is the tile size for the FIRST Loop
 
 
 void COMPUTE_NAME( int m0, int k0,
@@ -71,7 +71,7 @@ void COMPUTE_NAME( int m0, int k0,
 
 {
   /*
-    This version is for 1D Tiling
+    This version is for 3D Tiling
   */
   int rid;
   int num_ranks;
@@ -103,7 +103,7 @@ void COMPUTE_NAME( int m0, int k0,
                   p_tile_end = k0;
                 }
 
-                // Inner loop for subtiles of dataset (loop 3)
+                // Inner loop for subtiles of dataset. This is a tile inside a tile.  (loop 3)
                 for (int inner_tile = 0; inner_tile < outer_tile_end; inner_tile += TILE_SIZE_INNER)
                 {
                     int inner_tile_end = inner_tile + TILE_SIZE_INNER;
@@ -112,12 +112,12 @@ void COMPUTE_NAME( int m0, int k0,
                         inner_tile_end = outer_tile_end;
                     }
 
-                    // Process each tile for dataset traversal
+                    //go throguh tile for dataset traversal
                     for (int i0 = inner_tile; i0 < inner_tile_end; ++i0)
                     {
                         float res = 0.0f;
 
-                        // Process each tile for weights traversal
+                        //go through each tile for weights traversal
                         for (int p0 = p_tile; p0 < p_tile_end; ++p0)
                         {
                           res += input_distributed[(p0 + i0) % m0] * weights_distributed[p0];
