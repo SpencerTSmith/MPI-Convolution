@@ -70,7 +70,9 @@ void COMPUTE_NAME( int m0, int k0,
 
 {
   /*
-    This version is for 1D Tiling
+    This version is for 2D Tiling
+    We will be having one level of tiling on the outer loop and one level of tiling on the inner loop.
+    Therefore tiling on the dataset traversal as well as the weights traversal.
   */
   int rid;
   int num_ranks;
