@@ -15,8 +15,8 @@ OP_BASELINE_FILE="./src/baseline_op.c"    #
 # HOWEVER, CHANGE THESE LINES:             #
 # Replace the filenames with your variants #
 ############################################
-OP_SUBMISSION_VAR01_FILE="./src/no_mod_branchless.c"
-OP_SUBMISSION_VAR02_FILE="./src/good_simd.c"
+OP_SUBMISSION_VAR01_FILE="./src/baseline_op.c"
+OP_SUBMISSION_VAR02_FILE="./src/distr_mem.c"
 OP_SUBMISSION_VAR03_FILE="./src/distr_mem_simd.c"
 
 ######################################################

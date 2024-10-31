@@ -58,7 +58,7 @@
 #endif
 
 #define AVX2_FLOAT_N 8
-#define TILE_3D_N 256
+#define TILE_3D_N 512
 
 void COMPUTE_NAME(int m0, int k0, float *input_distributed, float *weights_distributed,
                   float *output_distributed)
